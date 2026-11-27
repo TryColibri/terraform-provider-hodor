@@ -1,0 +1,34 @@
+---
+page_title: "{{.Name}} {{.Type}} - {{.RenderedProviderName}}"
+subcategory: ""
+description: |-
+{{ .Description | plainmarkdown | trimspace | prefixlines "  " }}
+---
+
+# {{.Name}} ({{.Type}})
+
+{{ .Description | trimspace }}
+
+## Example Usage
+
+{{ tffile .ExampleFile }}
+
+## Limitations
+
+- Terraform cannot add a person to the workspace. Someone who is not a member yet joins in the Hodor app first; until then the apply fails on `email`.
+- Hodor matches the email without regard to case. A change of case alone changes nothing in Hodor, and the state keeps the configuration's spelling.
+- The members of a group the directory sync owns are the directory's: adding someone to it, or removing someone from it, fails with `403`. Manage them in the identity provider.
+
+{{ .SchemaMarkdown | trimspace }}
+
+## Import
+
+A membership is imported by its group's id and the email, joined by `/`: `<group id>/<email>`, the group's id `grp_` followed by 12 letters and digits, as Hodor answered it when the group was created.
+
+In Terraform 1.5 and later, with an [`import` block](https://developer.hashicorp.com/terraform/language/import):
+
+{{ tffile .ImportIDConfigFile }}
+
+Or with the [`terraform import` command](https://developer.hashicorp.com/terraform/cli/commands/import):
+
+{{ codefile "shell" .ImportFile }}

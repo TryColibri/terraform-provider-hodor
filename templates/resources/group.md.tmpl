@@ -1,0 +1,33 @@
+---
+page_title: "{{.Name}} {{.Type}} - {{.RenderedProviderName}}"
+subcategory: ""
+description: |-
+{{ .Description | plainmarkdown | trimspace | prefixlines "  " }}
+---
+
+# {{.Name}} ({{.Type}})
+
+{{ .Description | trimspace }}
+
+## Example Usage
+
+{{ tffile .ExampleFile }}
+
+## Limitations
+
+- The group's members are `hodor_group_membership` resources, one per member: this resource neither lists nor manages them. Destroying the group removes its memberships with it.
+- A group the directory sync owns keeps its name: renaming it fails.
+
+{{ .SchemaMarkdown | trimspace }}
+
+## Import
+
+A group is imported by its id, `grp_` followed by 12 letters and digits, as Hodor answered it when the group was created: the `id` of the `hodor_group` in another state, for example. The Hodor app does not show it yet.
+
+In Terraform 1.5 and later, with an [`import` block](https://developer.hashicorp.com/terraform/language/import):
+
+{{ tffile .ImportIDConfigFile }}
+
+Or with the [`terraform import` command](https://developer.hashicorp.com/terraform/cli/commands/import):
+
+{{ codefile "shell" .ImportFile }}

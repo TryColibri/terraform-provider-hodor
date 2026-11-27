@@ -1,0 +1,34 @@
+---
+page_title: "{{.Name}} {{.Type}} - {{.RenderedProviderName}}"
+subcategory: ""
+description: |-
+{{ .Description | plainmarkdown | trimspace | prefixlines "  " }}
+---
+
+# {{.Name}} ({{.Type}})
+
+{{ .Description | trimspace }}
+
+## Example Usage
+
+{{ tffile .ExampleFile }}
+
+## Limitations
+
+- Replacing the only connector of an integration the workspace made itself (a custom MCP or OpenAPI connector) fails: Terraform deletes the connector first, which removes the integration with it, and the create then finds no integration. Keep another connector of that integration while changing `integration` or `scope`, or add the new connector under another name before removing the old one.
+- Hodor does not say whether a connector holds a key. A key removed in the app stays removed until `api_key_wo_version` changes; removing `api_key_wo` and `api_key_wo_version` from the configuration leaves the key in place.
+- A new integration is added to the workspace's catalog in the Hodor app, and a personal or OAuth connector is connected there.
+
+{{ .SchemaMarkdown | trimspace }}
+
+## Import
+
+A connector is imported by its id, `con_` followed by 12 letters and digits, as Hodor answered it when the connector was created: the `id` of the `hodor_connector` in another state, for example. The Hodor app does not show it yet. The API key is never read back: set `api_key_wo` and a new `api_key_wo_version` to send it again.
+
+In Terraform 1.5 and later, with an [`import` block](https://developer.hashicorp.com/terraform/language/import):
+
+{{ tffile .ImportIDConfigFile }}
+
+Or with the [`terraform import` command](https://developer.hashicorp.com/terraform/cli/commands/import):
+
+{{ codefile "shell" .ImportFile }}

@@ -1,0 +1,13 @@
+# The client of the public API, generated from public.json, the copy of
+# apps/api/public-api/public.json kept in this folder. CI fails when the copy
+# differs from the committed spec, or when hodorapi.gen.go differs from what
+# `go generate ./...` writes from it. Never edit either by hand.
+package: hodorapi
+output: hodorapi.gen.go
+generate:
+  client: true
+  models: true
+output-options:
+  # A field the spec declares nullable is a nullable.Nullable: a merge patch
+  # can then tell "left out" (unchanged) from null (cleared).
+  nullable-type: true

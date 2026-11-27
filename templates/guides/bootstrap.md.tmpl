@@ -1,0 +1,21 @@
+---
+page_title: "Set up a workspace"
+subcategory: ""
+description: |-
+  Every resource of the Hodor provider in one configuration: a connector, a group and its members, and a contract with its version in force.
+---
+
+# Set up a workspace
+
+This configuration sets up a workspace from scratch: a Notion connector, a support group and its members, and a contract whose version in force serves the group and opens Notion's tools.
+
+Before you apply it:
+
+- A workspace owner (an admin, in a workspace with no owner) makes a workspace API key in Settings > API keys. Set it as `HODOR_API_KEY` in the environment Terraform runs in, and the workspace's id (`ws_` followed by 12 letters and digits, which Settings > API keys shows beside a button that copies it) as `HODOR_WORKSPACE_ID`.
+- The group's members are already members of the workspace: people join it in the Hodor app.
+- Pass the connector's API key as an environment variable, `TF_VAR_notion_api_key`. Its variable is ephemeral, so Terraform writes it to no plan or state file.
+- The contract enables every tool the workspace's catalog lists for Notion, read by `data "hodor_integration"` and named one by one in the plan. A tool the catalog gains later shows in a later plan as a new version. To enable fewer, list their names instead.
+
+{{ tffile "examples/bootstrap/main.tf" }}
+
+The contract's latest version is the one in force while the contract is on (`enabled`, default `true`). A version is immutable: to change what the contract grants, change `hodor_contract_version.support`. Terraform plans a replacement and creates a new version, in force at once; the version it replaces stays in Hodor, removed from the state only. To roll back, restore the older configuration and apply: Hodor creates a new version with it, under a new number.

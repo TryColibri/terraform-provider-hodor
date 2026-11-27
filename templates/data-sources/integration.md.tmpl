@@ -1,0 +1,32 @@
+---
+page_title: "{{.Name}} {{.Type}} - {{.RenderedProviderName}}"
+subcategory: ""
+description: |-
+{{ .Description | plainmarkdown | trimspace | prefixlines "  " }}
+---
+
+# {{.Name}} ({{.Type}})
+
+{{ .Description | trimspace }}
+
+## Example Usage
+
+{{ tffile .ExampleFile }}
+
+## Find an integration's id
+
+A connector names its integration by id: `int_` followed by 12 letters and digits, case-sensitive, such as `int_k3x9q2m1abCD`. The same integration has another id in another Hodor environment, so a configuration reads the id rather than writing it down where it can:
+
+- In the configuration, with this data source: `data.hodor_integration.x.id`, the integration found by its `slug` (`notion`, the prefix of its tools' names) or its `name` (`Notion`, as the catalog shows it). Two integrations may share a name; the read then fails and lists both, with their ids and slugs: name the one you mean by `slug` or `id`.
+- With the workspace API key, before writing the configuration: `GET /v2/workspaces/{workspace_id}/integrations` lists every integration the workspace's catalog shows, the global ones and the workspace's own, each with its `id`, `slug`, `name` and `kind`.
+
+  ```shell
+  curl -s -H "Authorization: Bearer $HODOR_API_KEY" \
+    "https://api.hodor.ai/v2/workspaces/$HODOR_WORKSPACE_ID/integrations"
+  ```
+
+- In the Hodor app: Connectors > New Connector, then open the integration. Its id is under its name, with a button that copies it.
+
+An id names exactly one integration, as written. An integration the workspace's catalog does not show, one hidden there included, fails the read.
+
+{{ .SchemaMarkdown | trimspace }}

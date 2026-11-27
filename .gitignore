@@ -1,0 +1,4 @@
+# The binary `go build .` writes.
+/terraform-provider-hodor
+# GoReleaser's output.
+/dist/

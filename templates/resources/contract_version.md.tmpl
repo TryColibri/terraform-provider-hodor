@@ -1,0 +1,39 @@
+---
+page_title: "{{.Name}} {{.Type}} - {{.RenderedProviderName}}"
+subcategory: ""
+description: |-
+{{ .Description | plainmarkdown | trimspace | prefixlines "  " }}
+---
+
+# {{.Name}} ({{.Type}})
+
+{{ .Description | trimspace }}
+
+## Example Usage
+
+{{ tffile .ExampleFile }}
+
+## Limitations
+
+- The contract's latest version is the one in force while the contract is on (`hodor_contract`'s `enabled`): a version is in force once applied. A version created while the contract is off is stored, and goes in force when the contract is switched on. A contract with no version grants nothing. Declare one `hodor_contract_version` per contract: two would fight for the latest.
+- A version is never edited: any change plans a replacement. Terraform removes the old version from the state, then creates the new one, which is in force at once while the contract is on; the old one stays in force until then.
+- Roll back by restoring the older configuration and applying: Hodor creates a new version with it, under a new number, in force at once while the contract is on, or once it is switched on. Importing an older version puts nothing in force.
+- Destroying a version only removes it from the state. Hodor keeps every version of a contract until the contract is deleted.
+- A tool is named as its connector's integration lists it, and resolved to that tool when the version is created. A tool renamed upstream later reads under its new name, which Terraform plans as a new version.
+- A permission set lists its tools: there is no "all tools", so a tool the connector gains later is not enabled until a new version lists it.
+- `code_mode = true` needs Code Mode on for the workspace: without it the API answers `403 feature-disabled`.
+- Workspace policies are not in the provider yet: they come with a later release. A version keeps the policies its contract's latest version attaches, as set in the Hodor app.
+
+{{ .SchemaMarkdown | trimspace }}
+
+## Import
+
+A version is imported by its contract's id and its id, joined by `/`: `<contract id>/<version id>`, each its prefix (`ctr_`, `ctv_`) followed by 12 letters and digits, as Hodor answered them. The latest version's id is `GET /v2/workspaces/{workspace_id}/contracts/{contract_id}/versions/current`'s `id`.
+
+In Terraform 1.5 and later, with an [`import` block](https://developer.hashicorp.com/terraform/language/import):
+
+{{ tffile .ImportIDConfigFile }}
+
+Or with the [`terraform import` command](https://developer.hashicorp.com/terraform/cli/commands/import):
+
+{{ codefile "shell" .ImportFile }}

@@ -1,0 +1,3442 @@
+{
+  "components": {
+    "schemas": {
+      "Connector": {
+        "description": "A connector of the workspace: an integration of the catalog, installed\nin one scope under one name, which a contract grants tools of.",
+        "properties": {
+          "created_at": {
+            "format": "date-time",
+            "readOnly": true,
+            "title": "Created At",
+            "type": "string"
+          },
+          "id": {
+            "pattern": "^con_[0-9A-Za-z]{12}$",
+            "readOnly": true,
+            "title": "Id",
+            "type": "string"
+          },
+          "integration": {
+            "description": "The id of the integration the connector installs: an entry of the workspace's catalog (`GET .../integrations`, then `GET .../integrations/{integration_id}`).",
+            "pattern": "^int_[0-9A-Za-z]{12}$",
+            "title": "Integration",
+            "type": "string",
+            "x-hodor-immutable": true
+          },
+          "name": {
+            "description": "The connector's name in the workspace, unique there: ASCII letters and digits, two of them joined by one `_` at most, e.g. `notion` or `notion_eu`. Tools are named after it, so the integration's longest tool name caps it: an integration may allow fewer than 32 characters, and a create or a rename over its cap is a 422 that says how many it allows.",
+            "title": "Name",
+            "type": "string"
+          },
+          "scope": {
+            "description": "Whose connection it holds: `shared`, one connection the whole workspace shares, or `personal`, each member's own.",
+            "enum": [
+              "shared",
+              "personal"
+            ],
+            "title": "Scope",
+            "type": "string",
+            "x-hodor-immutable": true
+          }
+        },
+        "required": [
+          "id",
+          "integration",
+          "scope",
+          "name",
+          "created_at"
+        ],
+        "title": "Connector",
+        "type": "object"
+      },
+      "ConnectorApiKey": {
+        "description": "That a connector holds a key, and since when; never the key.",
+        "properties": {
+          "connector_id": {
+            "pattern": "^con_[0-9A-Za-z]{12}$",
+            "readOnly": true,
+            "title": "Connector Id",
+            "type": "string"
+          },
+          "updated_at": {
+            "description": "When the key was last set.",
+            "format": "date-time",
+            "readOnly": true,
+            "title": "Updated At",
+            "type": "string"
+          }
+        },
+        "required": [
+          "connector_id",
+          "updated_at"
+        ],
+        "title": "ConnectorApiKey",
+        "type": "object"
+      },
+      "ConnectorApiKeyWrite": {
+        "description": "The API key a shared connector calls its provider with.",
+        "properties": {
+          "api_key": {
+            "description": "The key, as the provider issued it; `user:password` for a connector that signs in with basic auth. Checked with the provider before it is stored when the provider has a check, and never answered.",
+            "format": "password",
+            "maxLength": 8192,
+            "minLength": 1,
+            "title": "Api Key",
+            "type": "string",
+            "writeOnly": true
+          }
+        },
+        "required": [
+          "api_key"
+        ],
+        "title": "ConnectorApiKeyWrite",
+        "type": "object"
+      },
+      "ConnectorCreate": {
+        "description": "A connector as a client creates it.",
+        "properties": {
+          "integration": {
+            "description": "The id of the integration the connector installs: an entry of the workspace's catalog (`GET .../integrations`, then `GET .../integrations/{integration_id}`).",
+            "pattern": "^int_[0-9A-Za-z]{12}$",
+            "title": "Integration",
+            "type": "string",
+            "x-hodor-immutable": true
+          },
+          "name": {
+            "description": "The connector's name in the workspace, unique there: ASCII letters and digits, two of them joined by one `_` at most, e.g. `notion` or `notion_eu`. Tools are named after it, so the integration's longest tool name caps it: an integration may allow fewer than 32 characters, and a create or a rename over its cap is a 422 that says how many it allows.",
+            "maxLength": 32,
+            "minLength": 1,
+            "pattern": "^[A-Za-z0-9](?:_?[A-Za-z0-9])*$",
+            "title": "Name",
+            "type": "string"
+          },
+          "scope": {
+            "description": "Whose connection it holds: `shared`, one connection the whole workspace shares, or `personal`, each member's own.",
+            "enum": [
+              "shared",
+              "personal"
+            ],
+            "title": "Scope",
+            "type": "string",
+            "x-hodor-immutable": true
+          }
+        },
+        "required": [
+          "integration",
+          "scope",
+          "name"
+        ],
+        "title": "ConnectorCreate",
+        "type": "object"
+      },
+      "ConnectorUpdate": {
+        "description": "A JSON Merge Patch of a connector: a field left out is left as it is.\nThe name is the one field that changes in place.",
+        "properties": {
+          "name": {
+            "description": "The connector's name in the workspace, unique there: ASCII letters and digits, two of them joined by one `_` at most, e.g. `notion` or `notion_eu`. Tools are named after it, so the integration's longest tool name caps it: an integration may allow fewer than 32 characters, and a create or a rename over its cap is a 422 that says how many it allows.",
+            "maxLength": 32,
+            "minLength": 1,
+            "pattern": "^[A-Za-z0-9](?:_?[A-Za-z0-9])*$",
+            "title": "Name",
+            "type": "string"
+          }
+        },
+        "title": "ConnectorUpdate",
+        "type": "object"
+      },
+      "Contract": {
+        "description": "A contract of the workspace: its identity and whether it is on. What it\ngrants, while it is on, is its latest version\n(`GET /contracts/{contract_id}/versions/current`).",
+        "properties": {
+          "access_requests_enabled": {
+            "description": "Whether the contract's members may ask for more access from their AI client or the app. Applies at once. Changing it needs access requests on for the workspace.",
+            "title": "Access Requests Enabled",
+            "type": "boolean"
+          },
+          "created_at": {
+            "format": "date-time",
+            "readOnly": true,
+            "title": "Created At",
+            "type": "string"
+          },
+          "description": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "What the contract is for. Null or left out, none.",
+            "title": "Description"
+          },
+          "enabled": {
+            "description": "Whether the contract is on. Off, its agents stay but are blocked, and a version created is stored without going in force; back on, its latest version is in force again. A contract with no version grants nothing either way.",
+            "title": "Enabled",
+            "type": "boolean"
+          },
+          "id": {
+            "pattern": "^ctr_[0-9A-Za-z]{12}$",
+            "readOnly": true,
+            "title": "Id",
+            "type": "string"
+          },
+          "name": {
+            "description": "The contract's name, as its members see it.",
+            "title": "Name",
+            "type": "string"
+          },
+          "updated_at": {
+            "format": "date-time",
+            "readOnly": true,
+            "title": "Updated At",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "description",
+          "access_requests_enabled",
+          "enabled",
+          "created_at",
+          "updated_at"
+        ],
+        "title": "Contract",
+        "type": "object"
+      },
+      "ContractCreate": {
+        "description": "A contract as a client creates it: granting nothing until a version of\nit is created, which goes in force at once if the contract is on.",
+        "properties": {
+          "access_requests_enabled": {
+            "default": true,
+            "description": "Whether the contract's members may ask for more access from their AI client or the app. Applies at once. Changing it needs access requests on for the workspace.",
+            "title": "Access Requests Enabled",
+            "type": "boolean"
+          },
+          "description": {
+            "anyOf": [
+              {
+                "maxLength": 10000,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "What the contract is for. Null or left out, none.",
+            "title": "Description"
+          },
+          "enabled": {
+            "default": true,
+            "description": "Whether the contract is on. Off, its agents stay but are blocked, and a version created is stored without going in force; back on, its latest version is in force again. A contract with no version grants nothing either way.",
+            "title": "Enabled",
+            "type": "boolean"
+          },
+          "name": {
+            "description": "The contract's name, as its members see it.",
+            "maxLength": 255,
+            "minLength": 1,
+            "pattern": "\\S",
+            "title": "Name",
+            "type": "string"
+          }
+        },
+        "required": [
+          "name"
+        ],
+        "title": "ContractCreate",
+        "type": "object"
+      },
+      "ContractUpdate": {
+        "description": "A JSON Merge Patch of a contract: a field left out is left as it is.\n`null` clears the description; every other field refuses it.",
+        "properties": {
+          "access_requests_enabled": {
+            "description": "Whether the contract's members may ask for more access from their AI client or the app. Applies at once. Changing it needs access requests on for the workspace.",
+            "title": "Access Requests Enabled",
+            "type": "boolean"
+          },
+          "description": {
+            "anyOf": [
+              {
+                "maxLength": 10000,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "What the contract is for. Null or left out, none.",
+            "title": "Description"
+          },
+          "enabled": {
+            "description": "Whether the contract is on. Off, its agents stay but are blocked, and a version created is stored without going in force; back on, its latest version is in force again. A contract with no version grants nothing either way.",
+            "title": "Enabled",
+            "type": "boolean"
+          },
+          "name": {
+            "description": "The contract's name, as its members see it.",
+            "maxLength": 255,
+            "minLength": 1,
+            "pattern": "\\S",
+            "title": "Name",
+            "type": "string"
+          }
+        },
+        "title": "ContractUpdate",
+        "type": "object"
+      },
+      "ContractVersion": {
+        "description": "One version of a contract: its complete configuration, immutable. The\ncontract's latest version is the one in force while the contract is on\n(`enabled`).",
+        "properties": {
+          "code_mode": {
+            "description": "Whether the version's agents get Code Mode (search and execute) instead of its tool list. Turning it on needs Code Mode on for the workspace.",
+            "title": "Code Mode",
+            "type": "boolean",
+            "x-hodor-immutable": true
+          },
+          "contract_id": {
+            "pattern": "^ctr_[0-9A-Za-z]{12}$",
+            "readOnly": true,
+            "title": "Contract Id",
+            "type": "string"
+          },
+          "created_at": {
+            "format": "date-time",
+            "readOnly": true,
+            "title": "Created At",
+            "type": "string"
+          },
+          "group_ids": {
+            "description": "The groups the version serves, `grp_...`.",
+            "items": {
+              "pattern": "^grp_[0-9A-Za-z]{12}$",
+              "type": "string"
+            },
+            "title": "Group Ids",
+            "type": "array",
+            "x-hodor-immutable": true
+          },
+          "id": {
+            "pattern": "^ctv_[0-9A-Za-z]{12}$",
+            "readOnly": true,
+            "title": "Id",
+            "type": "string"
+          },
+          "number": {
+            "description": "The version's number in its contract: 1, 2, 3...",
+            "readOnly": true,
+            "title": "Number",
+            "type": "integer"
+          },
+          "permission_sets": {
+            "description": "What the version opens on each connector, one permission set per connector.",
+            "items": {
+              "$ref": "#/components/schemas/PermissionSet"
+            },
+            "title": "Permission Sets",
+            "type": "array",
+            "x-hodor-immutable": true
+          }
+        },
+        "required": [
+          "id",
+          "contract_id",
+          "number",
+          "permission_sets",
+          "group_ids",
+          "code_mode",
+          "created_at"
+        ],
+        "title": "ContractVersion",
+        "type": "object"
+      },
+      "ContractVersionCreate": {
+        "description": "A version as a client creates it: whole, never edited after. Creating\nit puts it in force at once, or when the contract is switched on if it is\noff: the latest version is the one in force while the contract is on.",
+        "properties": {
+          "code_mode": {
+            "default": false,
+            "description": "Whether the version's agents get Code Mode (search and execute) instead of its tool list. Turning it on needs Code Mode on for the workspace.",
+            "title": "Code Mode",
+            "type": "boolean"
+          },
+          "group_ids": {
+            "description": "The groups the version serves, `grp_...`.",
+            "items": {
+              "pattern": "^grp_[0-9A-Za-z]{12}$",
+              "type": "string"
+            },
+            "maxItems": 500,
+            "title": "Group Ids",
+            "type": "array"
+          },
+          "permission_sets": {
+            "description": "What the version opens on each connector, one permission set per connector.",
+            "items": {
+              "$ref": "#/components/schemas/PermissionSet"
+            },
+            "maxItems": 500,
+            "title": "Permission Sets",
+            "type": "array"
+          }
+        },
+        "title": "ContractVersionCreate",
+        "type": "object"
+      },
+      "Group": {
+        "description": "A group of the workspace's members, which contracts serve.",
+        "properties": {
+          "created_at": {
+            "format": "date-time",
+            "readOnly": true,
+            "title": "Created At",
+            "type": "string"
+          },
+          "description": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "What the group is for. Null or left out, none.",
+            "title": "Description"
+          },
+          "id": {
+            "pattern": "^grp_[0-9A-Za-z]{12}$",
+            "readOnly": true,
+            "title": "Id",
+            "type": "string"
+          },
+          "name": {
+            "description": "The group's name, unique in the workspace without regard to case.",
+            "title": "Name",
+            "type": "string"
+          },
+          "updated_at": {
+            "format": "date-time",
+            "readOnly": true,
+            "title": "Updated At",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "description",
+          "created_at",
+          "updated_at"
+        ],
+        "title": "Group",
+        "type": "object"
+      },
+      "GroupCreate": {
+        "description": "A group as a client creates it, with no member yet.",
+        "properties": {
+          "description": {
+            "anyOf": [
+              {
+                "maxLength": 2000,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "What the group is for. Null or left out, none.",
+            "title": "Description"
+          },
+          "name": {
+            "description": "The group's name, unique in the workspace without regard to case.",
+            "maxLength": 512,
+            "minLength": 1,
+            "pattern": "\\S",
+            "title": "Name",
+            "type": "string"
+          }
+        },
+        "required": [
+          "name"
+        ],
+        "title": "GroupCreate",
+        "type": "object"
+      },
+      "GroupMembership": {
+        "description": "A group's membership: a reference to a member of the workspace, who is\nin the group.",
+        "properties": {
+          "email": {
+            "description": "The member's email, as their Hodor account holds it. A path matches it without regard to case.",
+            "readOnly": true,
+            "title": "Email",
+            "type": "string"
+          },
+          "group_id": {
+            "pattern": "^grp_[0-9A-Za-z]{12}$",
+            "readOnly": true,
+            "title": "Group Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "group_id",
+          "email"
+        ],
+        "title": "GroupMembership",
+        "type": "object"
+      },
+      "GroupUpdate": {
+        "description": "A JSON Merge Patch of a group: a field left out is left as it is.\n`null` clears the description; the name refuses it.",
+        "properties": {
+          "description": {
+            "anyOf": [
+              {
+                "maxLength": 2000,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "What the group is for. Null or left out, none.",
+            "title": "Description"
+          },
+          "name": {
+            "description": "The group's name, unique in the workspace without regard to case.",
+            "maxLength": 512,
+            "minLength": 1,
+            "pattern": "\\S",
+            "title": "Name",
+            "type": "string"
+          }
+        },
+        "title": "GroupUpdate",
+        "type": "object"
+      },
+      "Integration": {
+        "description": "An entry of the catalog the workspace sees, which a connector\ninstalls in the workspace.",
+        "properties": {
+          "auth_type": {
+            "description": "How a connector of it signs in to the integration, as the catalog records it, e.g. `oauth`, `api_key` or `none`.",
+            "readOnly": true,
+            "title": "Auth Type",
+            "type": "string"
+          },
+          "description": {
+            "description": "What the integration does; empty when the catalog says nothing.",
+            "readOnly": true,
+            "title": "Description",
+            "type": "string"
+          },
+          "id": {
+            "description": "The integration's id: what a connector's `integration` names.",
+            "pattern": "^int_[0-9A-Za-z]{12}$",
+            "readOnly": true,
+            "title": "Id",
+            "type": "string"
+          },
+          "kind": {
+            "description": "How Hodor reaches it: `mcp`, an MCP server, or `api_wrapper`, an HTTP API Hodor serves as tools.",
+            "enum": [
+              "mcp",
+              "api_wrapper"
+            ],
+            "readOnly": true,
+            "title": "Kind",
+            "type": "string"
+          },
+          "name": {
+            "description": "The integration's name, as the catalog shows it.",
+            "readOnly": true,
+            "title": "Name",
+            "type": "string"
+          },
+          "scopes": {
+            "description": "The scopes a connector of it may take, from `shared` and `personal`.",
+            "items": {
+              "enum": [
+                "shared",
+                "personal"
+              ],
+              "type": "string"
+            },
+            "readOnly": true,
+            "title": "Scopes",
+            "type": "array"
+          },
+          "slug": {
+            "description": "The integration's slug in the catalog, e.g. `notion`, the prefix of its tools' names. Answered only: a connector names its integration by `id`.",
+            "readOnly": true,
+            "title": "Slug",
+            "type": "string"
+          },
+          "tools": {
+            "description": "The names of its tools in the catalog, in the catalog's order: the version every connector starts from, before a connection brings its own.",
+            "items": {
+              "type": "string"
+            },
+            "readOnly": true,
+            "title": "Tools",
+            "type": "array"
+          }
+        },
+        "required": [
+          "id",
+          "slug",
+          "name",
+          "description",
+          "kind",
+          "auth_type",
+          "scopes",
+          "tools"
+        ],
+        "title": "Integration",
+        "type": "object"
+      },
+      "IntegrationList": {
+        "description": "Every entry of the catalog the workspace sees, in one answer:\nthere is no pagination yet, so no `next_page_token`.",
+        "properties": {
+          "items": {
+            "description": "The integrations, ordered by slug: the globals and the workspace's own, those hidden there left out.",
+            "items": {
+              "$ref": "#/components/schemas/IntegrationSummary"
+            },
+            "readOnly": true,
+            "title": "Items",
+            "type": "array"
+          }
+        },
+        "required": [
+          "items"
+        ],
+        "title": "IntegrationList",
+        "type": "object"
+      },
+      "IntegrationSummary": {
+        "description": "An entry of the catalog the workspace sees, as the list answers it:\nenough to pick one and name it by its id.",
+        "properties": {
+          "id": {
+            "description": "The integration's id: what a connector's `integration` names.",
+            "pattern": "^int_[0-9A-Za-z]{12}$",
+            "readOnly": true,
+            "title": "Id",
+            "type": "string"
+          },
+          "kind": {
+            "description": "How Hodor reaches it: `mcp`, an MCP server, or `api_wrapper`, an HTTP API Hodor serves as tools.",
+            "enum": [
+              "mcp",
+              "api_wrapper"
+            ],
+            "readOnly": true,
+            "title": "Kind",
+            "type": "string"
+          },
+          "name": {
+            "description": "The integration's name, as the catalog shows it.",
+            "readOnly": true,
+            "title": "Name",
+            "type": "string"
+          },
+          "slug": {
+            "description": "The integration's slug in the catalog, e.g. `notion`, the prefix of its tools' names. Answered only: a connector names its integration by `id`.",
+            "readOnly": true,
+            "title": "Slug",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "slug",
+          "name",
+          "kind"
+        ],
+        "title": "IntegrationSummary",
+        "type": "object"
+      },
+      "PermissionSet": {
+        "description": "What a version opens on one connector: the tools it enables there. Its\nmode follows the connector's scope.",
+        "properties": {
+          "connector_id": {
+            "description": "The connector the permission set opens, `con_...`.",
+            "pattern": "^con_[0-9A-Za-z]{12}$",
+            "title": "Connector Id",
+            "type": "string"
+          },
+          "tools": {
+            "description": "The names of the connector's tools the permission set enables, as the integration lists them; at least one. A tool the connector exposes later is not enabled: there is no \"all tools\".",
+            "items": {
+              "maxLength": 256,
+              "minLength": 1,
+              "type": "string"
+            },
+            "maxItems": 1000,
+            "minItems": 1,
+            "title": "Tools",
+            "type": "array"
+          }
+        },
+        "required": [
+          "connector_id",
+          "tools"
+        ],
+        "title": "PermissionSet",
+        "type": "object"
+      },
+      "Problem": {
+        "description": "An error, as Problem Details (RFC 9457). `type` is a stable URI a client\ntests against: it never changes for a given error. `title` belongs to the\ntype; `detail` explains this occurrence.",
+        "properties": {
+          "detail": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "What went wrong with this request, in English.",
+            "title": "Detail"
+          },
+          "errors": {
+            "anyOf": [
+              {
+                "items": {
+                  "$ref": "#/components/schemas/ProblemFieldError"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "The parts of the request that were refused, on a `validation-failed` error.",
+            "title": "Errors"
+          },
+          "status": {
+            "description": "The HTTP status code of the response.",
+            "title": "Status",
+            "type": "integer"
+          },
+          "title": {
+            "description": "A short summary of the kind of error.",
+            "title": "Title",
+            "type": "string"
+          },
+          "type": {
+            "description": "A URI that identifies the kind of error, e.g. `https://api.hodor.ai/problems/not-found`, or `about:blank` for an HTTP status with no type of its own.",
+            "title": "Type",
+            "type": "string"
+          }
+        },
+        "required": [
+          "type",
+          "title",
+          "status"
+        ],
+        "title": "Problem",
+        "type": "object"
+      },
+      "ProblemFieldError": {
+        "description": "One part of the request the façade refused: where it is and why, never\nthe value sent, which may be a secret.",
+        "properties": {
+          "loc": {
+            "description": "Where the error is: `body`, `path` or `query`, then the field's path.",
+            "items": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "integer"
+                }
+              ]
+            },
+            "title": "Loc",
+            "type": "array"
+          },
+          "msg": {
+            "description": "Why the value was refused, in English.",
+            "title": "Msg",
+            "type": "string"
+          },
+          "type": {
+            "description": "The kind of error, e.g. `missing` or `string_too_long`.",
+            "title": "Type",
+            "type": "string"
+          }
+        },
+        "required": [
+          "loc",
+          "msg",
+          "type"
+        ],
+        "title": "ProblemFieldError",
+        "type": "object"
+      },
+      "Workspace": {
+        "description": "The workspace the key belongs to, which every public path starts with.",
+        "properties": {
+          "created_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "When the workspace was created; null for a workspace older than the record of creation dates.",
+            "readOnly": true,
+            "title": "Created At"
+          },
+          "id": {
+            "pattern": "^ws_[0-9A-Za-z]{12}$",
+            "readOnly": true,
+            "title": "Id",
+            "type": "string"
+          },
+          "name": {
+            "description": "The workspace's name, as its admins set it in the app.",
+            "readOnly": true,
+            "title": "Name",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "created_at"
+        ],
+        "title": "Workspace",
+        "type": "object"
+      }
+    },
+    "securitySchemes": {
+      "WorkspaceApiKey": {
+        "description": "A workspace API key (`hod_ws_...`), created in the workspace settings.",
+        "scheme": "bearer",
+        "type": "http"
+      }
+    }
+  },
+  "info": {
+    "description": "The API Hodor promises never to break, for clients Hodor does not run, the Terraform provider first. It takes a workspace API key and nothing else, and acts on the key's workspace. Every error is Problem Details (RFC 9457) with a stable `type`.",
+    "title": "Hodor public API",
+    "version": "2"
+  },
+  "openapi": "3.1.0",
+  "paths": {
+    "/v2/workspaces/{workspace_id}": {
+      "get": {
+        "description": "The key's workspace: its id, which every public path starts with,\nits name and when it was created.",
+        "operationId": "get_workspace",
+        "parameters": [
+          {
+            "description": "The workspace the key belongs to (`ws_...`). Any other answers 404.",
+            "in": "path",
+            "name": "workspace_id",
+            "required": true,
+            "schema": {
+              "pattern": "^ws_[0-9A-Za-z]{12}$",
+              "title": "Workspace Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Workspace"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "402": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Payment required"
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Not found"
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Validation failed"
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Internal error"
+          }
+        },
+        "security": [
+          {
+            "WorkspaceApiKey": []
+          }
+        ],
+        "summary": "Get Workspace",
+        "tags": [
+          "Workspaces"
+        ]
+      }
+    },
+    "/v2/workspaces/{workspace_id}/connectors": {
+      "post": {
+        "description": "A new connector of an integration the workspace's catalog holds. A\nname the workspace already holds is a 409, a name longer than the\nintegration allows a 422 that says how long it may be.",
+        "operationId": "create_connector",
+        "parameters": [
+          {
+            "description": "The workspace the key belongs to (`ws_...`). Any other answers 404.",
+            "in": "path",
+            "name": "workspace_id",
+            "required": true,
+            "schema": {
+              "pattern": "^ws_[0-9A-Za-z]{12}$",
+              "title": "Workspace Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ConnectorCreate"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Connector"
+                }
+              }
+            },
+            "description": "Created",
+            "headers": {
+              "Location": {
+                "description": "The path of the new resource, from `/v2/workspaces/{workspace_id}`.",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "402": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Payment required"
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Not found"
+          },
+          "409": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Validation failed"
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Internal error"
+          }
+        },
+        "security": [
+          {
+            "WorkspaceApiKey": []
+          }
+        ],
+        "summary": "Create Connector",
+        "tags": [
+          "Connectors"
+        ]
+      }
+    },
+    "/v2/workspaces/{workspace_id}/connectors/{connector_id}": {
+      "delete": {
+        "description": "Removes the connector with every connection of it, workspace and\npersonal, and its place in every contract that grants it.",
+        "operationId": "delete_connector",
+        "parameters": [
+          {
+            "description": "The workspace the key belongs to (`ws_...`). Any other answers 404.",
+            "in": "path",
+            "name": "workspace_id",
+            "required": true,
+            "schema": {
+              "pattern": "^ws_[0-9A-Za-z]{12}$",
+              "title": "Workspace Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "connector_id",
+            "required": true,
+            "schema": {
+              "pattern": "^con_[0-9A-Za-z]{12}$",
+              "title": "Connector Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "402": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Payment required"
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Not found"
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Validation failed"
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Internal error"
+          }
+        },
+        "security": [
+          {
+            "WorkspaceApiKey": []
+          }
+        ],
+        "summary": "Delete Connector",
+        "tags": [
+          "Connectors"
+        ]
+      },
+      "get": {
+        "operationId": "get_connector",
+        "parameters": [
+          {
+            "description": "The workspace the key belongs to (`ws_...`). Any other answers 404.",
+            "in": "path",
+            "name": "workspace_id",
+            "required": true,
+            "schema": {
+              "pattern": "^ws_[0-9A-Za-z]{12}$",
+              "title": "Workspace Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "connector_id",
+            "required": true,
+            "schema": {
+              "pattern": "^con_[0-9A-Za-z]{12}$",
+              "title": "Connector Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Connector"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "402": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Payment required"
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Not found"
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Validation failed"
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Internal error"
+          }
+        },
+        "security": [
+          {
+            "WorkspaceApiKey": []
+          }
+        ],
+        "summary": "Get Connector",
+        "tags": [
+          "Connectors"
+        ]
+      },
+      "patch": {
+        "description": "Renames the connector in place; its tools are named after it. A name\nthe workspace already holds is a 409, a name longer than the integration\nallows a 422 that says how long it may be.",
+        "operationId": "update_connector",
+        "parameters": [
+          {
+            "description": "The workspace the key belongs to (`ws_...`). Any other answers 404.",
+            "in": "path",
+            "name": "workspace_id",
+            "required": true,
+            "schema": {
+              "pattern": "^ws_[0-9A-Za-z]{12}$",
+              "title": "Workspace Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "connector_id",
+            "required": true,
+            "schema": {
+              "pattern": "^con_[0-9A-Za-z]{12}$",
+              "title": "Connector Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/merge-patch+json": {
+              "schema": {
+                "$ref": "#/components/schemas/ConnectorUpdate"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Connector"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "402": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Payment required"
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Not found"
+          },
+          "409": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Validation failed"
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Internal error"
+          }
+        },
+        "security": [
+          {
+            "WorkspaceApiKey": []
+          }
+        ],
+        "summary": "Update Connector",
+        "tags": [
+          "Connectors"
+        ]
+      }
+    },
+    "/v2/workspaces/{workspace_id}/connectors/{connector_id}/api-key": {
+      "put": {
+        "description": "Sets the API key a shared connector calls its provider with:\n`201` when it held none, `200` when this one replaces its key. The key is\nchecked with the provider first when the provider has a check (a refused\nkey is a 400, the provider out of reach a 502 or 504), and never answered.\nA personal connector, or one that takes no key (it connects with\nOAuth, or with no secret), is a 409.",
+        "operationId": "set_connector_api_key",
+        "parameters": [
+          {
+            "description": "The workspace the key belongs to (`ws_...`). Any other answers 404.",
+            "in": "path",
+            "name": "workspace_id",
+            "required": true,
+            "schema": {
+              "pattern": "^ws_[0-9A-Za-z]{12}$",
+              "title": "Workspace Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "connector_id",
+            "required": true,
+            "schema": {
+              "pattern": "^con_[0-9A-Za-z]{12}$",
+              "title": "Connector Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ConnectorApiKeyWrite"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ConnectorApiKey"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ConnectorApiKey"
+                }
+              }
+            },
+            "description": "The connector held no key."
+          },
+          "400": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Bad request"
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "402": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Payment required"
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Not found"
+          },
+          "409": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Validation failed"
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Internal error"
+          },
+          "502": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Bad Gateway"
+          },
+          "504": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Gateway Timeout"
+          }
+        },
+        "security": [
+          {
+            "WorkspaceApiKey": []
+          }
+        ],
+        "summary": "Set Connector Api Key",
+        "tags": [
+          "Connectors"
+        ]
+      }
+    },
+    "/v2/workspaces/{workspace_id}/contracts": {
+      "post": {
+        "description": "A new contract, authored by the key's author. It grants nothing until\na version of it is created, which goes in force at once if the contract\nis on (`enabled`, on by default); a refusal creates nothing. Audited\nonce, as the key: `contract.created`, with the contract's name and the\nnames of the fields the create set otherwise than a new contract reads\n(`fields`, `access_requests_enabled` and `enabled` switched off).",
+        "operationId": "create_contract",
+        "parameters": [
+          {
+            "description": "The workspace the key belongs to (`ws_...`). Any other answers 404.",
+            "in": "path",
+            "name": "workspace_id",
+            "required": true,
+            "schema": {
+              "pattern": "^ws_[0-9A-Za-z]{12}$",
+              "title": "Workspace Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ContractCreate"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Contract"
+                }
+              }
+            },
+            "description": "Created",
+            "headers": {
+              "Location": {
+                "description": "The path of the new resource, from `/v2/workspaces/{workspace_id}`.",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "402": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Payment required"
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Not found"
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Validation failed"
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Internal error"
+          }
+        },
+        "security": [
+          {
+            "WorkspaceApiKey": []
+          }
+        ],
+        "summary": "Create Contract",
+        "tags": [
+          "Contracts"
+        ]
+      }
+    },
+    "/v2/workspaces/{workspace_id}/contracts/{contract_id}": {
+      "delete": {
+        "description": "Deletes the contract, its versions and the agents it made; pending\naccess requests on it are cancelled.",
+        "operationId": "delete_contract",
+        "parameters": [
+          {
+            "description": "The workspace the key belongs to (`ws_...`). Any other answers 404.",
+            "in": "path",
+            "name": "workspace_id",
+            "required": true,
+            "schema": {
+              "pattern": "^ws_[0-9A-Za-z]{12}$",
+              "title": "Workspace Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "contract_id",
+            "required": true,
+            "schema": {
+              "pattern": "^ctr_[0-9A-Za-z]{12}$",
+              "title": "Contract Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "402": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Payment required"
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Not found"
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Validation failed"
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Internal error"
+          }
+        },
+        "security": [
+          {
+            "WorkspaceApiKey": []
+          }
+        ],
+        "summary": "Delete Contract",
+        "tags": [
+          "Contracts"
+        ]
+      },
+      "get": {
+        "operationId": "get_contract",
+        "parameters": [
+          {
+            "description": "The workspace the key belongs to (`ws_...`). Any other answers 404.",
+            "in": "path",
+            "name": "workspace_id",
+            "required": true,
+            "schema": {
+              "pattern": "^ws_[0-9A-Za-z]{12}$",
+              "title": "Workspace Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "contract_id",
+            "required": true,
+            "schema": {
+              "pattern": "^ctr_[0-9A-Za-z]{12}$",
+              "title": "Contract Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Contract"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "402": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Payment required"
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Not found"
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Validation failed"
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Internal error"
+          }
+        },
+        "security": [
+          {
+            "WorkspaceApiKey": []
+          }
+        ],
+        "summary": "Get Contract",
+        "tags": [
+          "Contracts"
+        ]
+      },
+      "patch": {
+        "description": "Changes what the body names, at once: a contract's identity is not\nversioned. `enabled: false` blocks its agents and takes its version out\nof force; `true` puts its latest version back in force, a 409 when that\nversion names a connector or a policy the workspace no longer has.\nAudited as the key: a switch that puts a version in force or takes it\nout is `contract.published` or `contract.unpublished`, and every other\nfield changed is named in one `contract.edited`.",
+        "operationId": "update_contract",
+        "parameters": [
+          {
+            "description": "The workspace the key belongs to (`ws_...`). Any other answers 404.",
+            "in": "path",
+            "name": "workspace_id",
+            "required": true,
+            "schema": {
+              "pattern": "^ws_[0-9A-Za-z]{12}$",
+              "title": "Workspace Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "contract_id",
+            "required": true,
+            "schema": {
+              "pattern": "^ctr_[0-9A-Za-z]{12}$",
+              "title": "Contract Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/merge-patch+json": {
+              "schema": {
+                "$ref": "#/components/schemas/ContractUpdate"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Contract"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "402": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Payment required"
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Not found"
+          },
+          "409": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Validation failed"
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Internal error"
+          }
+        },
+        "security": [
+          {
+            "WorkspaceApiKey": []
+          }
+        ],
+        "summary": "Update Contract",
+        "tags": [
+          "Contracts"
+        ]
+      }
+    },
+    "/v2/workspaces/{workspace_id}/contracts/{contract_id}/versions": {
+      "post": {
+        "description": "A new version of the contract, whole, in force at once: the latest\nversion is the one in force, and the contract grants what it says from\nthis answer on. On a contract switched off, it is stored and goes in\nforce when the contract is switched on. A rollback is a new version with an older configuration.\nIt keeps the workspace policies the latest version attaches. A connector\nremoved while it is created is a 409 naming it; a policy it keeps, deleted\nsince, is a 409 too, which names none. A refusal writes nothing.",
+        "operationId": "create_contract_version",
+        "parameters": [
+          {
+            "description": "The workspace the key belongs to (`ws_...`). Any other answers 404.",
+            "in": "path",
+            "name": "workspace_id",
+            "required": true,
+            "schema": {
+              "pattern": "^ws_[0-9A-Za-z]{12}$",
+              "title": "Workspace Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "contract_id",
+            "required": true,
+            "schema": {
+              "pattern": "^ctr_[0-9A-Za-z]{12}$",
+              "title": "Contract Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ContractVersionCreate"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ContractVersion"
+                }
+              }
+            },
+            "description": "Created",
+            "headers": {
+              "Location": {
+                "description": "The path of the new resource, from `/v2/workspaces/{workspace_id}`.",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "402": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Payment required"
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Not found"
+          },
+          "409": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Validation failed"
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Internal error"
+          }
+        },
+        "security": [
+          {
+            "WorkspaceApiKey": []
+          }
+        ],
+        "summary": "Create Contract Version",
+        "tags": [
+          "Contract versions"
+        ]
+      }
+    },
+    "/v2/workspaces/{workspace_id}/contracts/{contract_id}/versions/current": {
+      "get": {
+        "description": "The contract's latest version, the one in force; a 404 when it has\nnone yet.",
+        "operationId": "get_current_contract_version",
+        "parameters": [
+          {
+            "description": "The workspace the key belongs to (`ws_...`). Any other answers 404.",
+            "in": "path",
+            "name": "workspace_id",
+            "required": true,
+            "schema": {
+              "pattern": "^ws_[0-9A-Za-z]{12}$",
+              "title": "Workspace Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "contract_id",
+            "required": true,
+            "schema": {
+              "pattern": "^ctr_[0-9A-Za-z]{12}$",
+              "title": "Contract Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ContractVersion"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "402": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Payment required"
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Not found"
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Validation failed"
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Internal error"
+          }
+        },
+        "security": [
+          {
+            "WorkspaceApiKey": []
+          }
+        ],
+        "summary": "Get Current Contract Version",
+        "tags": [
+          "Contract versions"
+        ]
+      }
+    },
+    "/v2/workspaces/{workspace_id}/contracts/{contract_id}/versions/{version_id}": {
+      "get": {
+        "description": "One version of the contract; another contract's is a 404.",
+        "operationId": "get_contract_version",
+        "parameters": [
+          {
+            "description": "The workspace the key belongs to (`ws_...`). Any other answers 404.",
+            "in": "path",
+            "name": "workspace_id",
+            "required": true,
+            "schema": {
+              "pattern": "^ws_[0-9A-Za-z]{12}$",
+              "title": "Workspace Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "contract_id",
+            "required": true,
+            "schema": {
+              "pattern": "^ctr_[0-9A-Za-z]{12}$",
+              "title": "Contract Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "version_id",
+            "required": true,
+            "schema": {
+              "pattern": "^ctv_[0-9A-Za-z]{12}$",
+              "title": "Version Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ContractVersion"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "402": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Payment required"
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Not found"
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Validation failed"
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Internal error"
+          }
+        },
+        "security": [
+          {
+            "WorkspaceApiKey": []
+          }
+        ],
+        "summary": "Get Contract Version",
+        "tags": [
+          "Contract versions"
+        ]
+      }
+    },
+    "/v2/workspaces/{workspace_id}/groups": {
+      "post": {
+        "description": "A new group, with no member yet. A name another group of the\nworkspace has, in any case, is a 409.",
+        "operationId": "create_group",
+        "parameters": [
+          {
+            "description": "The workspace the key belongs to (`ws_...`). Any other answers 404.",
+            "in": "path",
+            "name": "workspace_id",
+            "required": true,
+            "schema": {
+              "pattern": "^ws_[0-9A-Za-z]{12}$",
+              "title": "Workspace Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/GroupCreate"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Group"
+                }
+              }
+            },
+            "description": "Created",
+            "headers": {
+              "Location": {
+                "description": "The path of the new resource, from `/v2/workspaces/{workspace_id}`.",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "402": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Payment required"
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Not found"
+          },
+          "409": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Validation failed"
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Internal error"
+          }
+        },
+        "security": [
+          {
+            "WorkspaceApiKey": []
+          }
+        ],
+        "summary": "Create Group",
+        "tags": [
+          "Groups"
+        ]
+      }
+    },
+    "/v2/workspaces/{workspace_id}/groups/{group_id}": {
+      "delete": {
+        "description": "Deletes the group, and takes it out of every contract's draft and\nevery contract it serves. The workspace's system group, and a group the\ndirectory sync still pushes, are not deleted (403).",
+        "operationId": "delete_group",
+        "parameters": [
+          {
+            "description": "The workspace the key belongs to (`ws_...`). Any other answers 404.",
+            "in": "path",
+            "name": "workspace_id",
+            "required": true,
+            "schema": {
+              "pattern": "^ws_[0-9A-Za-z]{12}$",
+              "title": "Workspace Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "group_id",
+            "required": true,
+            "schema": {
+              "pattern": "^grp_[0-9A-Za-z]{12}$",
+              "title": "Group Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "402": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Payment required"
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Not found"
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Validation failed"
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Internal error"
+          }
+        },
+        "security": [
+          {
+            "WorkspaceApiKey": []
+          }
+        ],
+        "summary": "Delete Group",
+        "tags": [
+          "Groups"
+        ]
+      },
+      "get": {
+        "operationId": "get_group",
+        "parameters": [
+          {
+            "description": "The workspace the key belongs to (`ws_...`). Any other answers 404.",
+            "in": "path",
+            "name": "workspace_id",
+            "required": true,
+            "schema": {
+              "pattern": "^ws_[0-9A-Za-z]{12}$",
+              "title": "Workspace Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "group_id",
+            "required": true,
+            "schema": {
+              "pattern": "^grp_[0-9A-Za-z]{12}$",
+              "title": "Group Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Group"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "402": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Payment required"
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Not found"
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Validation failed"
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Internal error"
+          }
+        },
+        "security": [
+          {
+            "WorkspaceApiKey": []
+          }
+        ],
+        "summary": "Get Group",
+        "tags": [
+          "Groups"
+        ]
+      },
+      "patch": {
+        "description": "Renames the group or changes its description, as the body names; a\nfield sent as the group reads it changes nothing. A group the\ndirectory sync owns keeps its name (403).",
+        "operationId": "update_group",
+        "parameters": [
+          {
+            "description": "The workspace the key belongs to (`ws_...`). Any other answers 404.",
+            "in": "path",
+            "name": "workspace_id",
+            "required": true,
+            "schema": {
+              "pattern": "^ws_[0-9A-Za-z]{12}$",
+              "title": "Workspace Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "group_id",
+            "required": true,
+            "schema": {
+              "pattern": "^grp_[0-9A-Za-z]{12}$",
+              "title": "Group Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/merge-patch+json": {
+              "schema": {
+                "$ref": "#/components/schemas/GroupUpdate"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Group"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "402": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Payment required"
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Not found"
+          },
+          "409": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Validation failed"
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Internal error"
+          }
+        },
+        "security": [
+          {
+            "WorkspaceApiKey": []
+          }
+        ],
+        "summary": "Update Group",
+        "tags": [
+          "Groups"
+        ]
+      }
+    },
+    "/v2/workspaces/{workspace_id}/groups/{group_id}/memberships/{email}": {
+      "delete": {
+        "description": "Takes the member with this email out of the group; a 404 when no one\nin the group has it. The workspace's system group, and a group the\ndirectory sync owns, keep their members (403).",
+        "operationId": "remove_group_membership",
+        "parameters": [
+          {
+            "description": "The member's email, matched without regard to case.",
+            "in": "path",
+            "name": "email",
+            "required": true,
+            "schema": {
+              "description": "The member's email, matched without regard to case.",
+              "maxLength": 254,
+              "minLength": 3,
+              "title": "Email",
+              "type": "string"
+            }
+          },
+          {
+            "description": "The workspace the key belongs to (`ws_...`). Any other answers 404.",
+            "in": "path",
+            "name": "workspace_id",
+            "required": true,
+            "schema": {
+              "pattern": "^ws_[0-9A-Za-z]{12}$",
+              "title": "Workspace Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "group_id",
+            "required": true,
+            "schema": {
+              "pattern": "^grp_[0-9A-Za-z]{12}$",
+              "title": "Group Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "402": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Payment required"
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Not found"
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Validation failed"
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Internal error"
+          }
+        },
+        "security": [
+          {
+            "WorkspaceApiKey": []
+          }
+        ],
+        "summary": "Remove Group Membership",
+        "tags": [
+          "Groups"
+        ]
+      },
+      "get": {
+        "description": "The membership of the workspace's member with this email: a\nreference to the member, its `group_id` and `email`, such as\n`{\"group_id\": \"grp_4fJ9q0ZkLm2X\", \"email\": \"alice@example.com\"}`; a 404\nwhen no one in the group has it.",
+        "operationId": "get_group_membership",
+        "parameters": [
+          {
+            "description": "The member's email, matched without regard to case.",
+            "in": "path",
+            "name": "email",
+            "required": true,
+            "schema": {
+              "description": "The member's email, matched without regard to case.",
+              "maxLength": 254,
+              "minLength": 3,
+              "title": "Email",
+              "type": "string"
+            }
+          },
+          {
+            "description": "The workspace the key belongs to (`ws_...`). Any other answers 404.",
+            "in": "path",
+            "name": "workspace_id",
+            "required": true,
+            "schema": {
+              "pattern": "^ws_[0-9A-Za-z]{12}$",
+              "title": "Workspace Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "group_id",
+            "required": true,
+            "schema": {
+              "pattern": "^grp_[0-9A-Za-z]{12}$",
+              "title": "Group Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GroupMembership"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "402": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Payment required"
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Not found"
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Validation failed"
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Internal error"
+          }
+        },
+        "security": [
+          {
+            "WorkspaceApiKey": []
+          }
+        ],
+        "summary": "Get Group Membership",
+        "tags": [
+          "Groups"
+        ]
+      },
+      "put": {
+        "description": "Puts the workspace's member with this email in the group: `201` when\nthey were not in it, `200`, changing nothing, when they already are. A\ngroup the directory sync owns keeps its members (403), whoever is in\nit: a membership the API cannot delete is not one it answers for.",
+        "operationId": "add_group_membership",
+        "parameters": [
+          {
+            "description": "The member's email, matched without regard to case.",
+            "in": "path",
+            "name": "email",
+            "required": true,
+            "schema": {
+              "description": "The member's email, matched without regard to case.",
+              "maxLength": 254,
+              "minLength": 3,
+              "title": "Email",
+              "type": "string"
+            }
+          },
+          {
+            "description": "The workspace the key belongs to (`ws_...`). Any other answers 404.",
+            "in": "path",
+            "name": "workspace_id",
+            "required": true,
+            "schema": {
+              "pattern": "^ws_[0-9A-Za-z]{12}$",
+              "title": "Workspace Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "group_id",
+            "required": true,
+            "schema": {
+              "pattern": "^grp_[0-9A-Za-z]{12}$",
+              "title": "Group Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GroupMembership"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GroupMembership"
+                }
+              }
+            },
+            "description": "The member was not in the group, and now is."
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "402": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Payment required"
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Not found"
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Validation failed"
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Internal error"
+          }
+        },
+        "security": [
+          {
+            "WorkspaceApiKey": []
+          }
+        ],
+        "summary": "Add Group Membership",
+        "tags": [
+          "Groups"
+        ]
+      }
+    },
+    "/v2/workspaces/{workspace_id}/integrations": {
+      "get": {
+        "description": "Every integration the workspace's catalog shows, ordered by slug: the\nglobal ones and those private to the workspace, those hidden there left\nout. Pick one and name it by its `id` in a connector.",
+        "operationId": "list_integrations",
+        "parameters": [
+          {
+            "description": "The workspace the key belongs to (`ws_...`). Any other answers 404.",
+            "in": "path",
+            "name": "workspace_id",
+            "required": true,
+            "schema": {
+              "pattern": "^ws_[0-9A-Za-z]{12}$",
+              "title": "Workspace Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/IntegrationList"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "402": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Payment required"
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Not found"
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Validation failed"
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Internal error"
+          }
+        },
+        "security": [
+          {
+            "WorkspaceApiKey": []
+          }
+        ],
+        "summary": "List Integrations",
+        "tags": [
+          "Integrations"
+        ]
+      }
+    },
+    "/v2/workspaces/{workspace_id}/integrations/{integration_id}": {
+      "get": {
+        "description": "The integration `integration_id` of the workspace's catalog: a global\none, or one private to the workspace.",
+        "operationId": "get_integration",
+        "parameters": [
+          {
+            "description": "The workspace the key belongs to (`ws_...`). Any other answers 404.",
+            "in": "path",
+            "name": "workspace_id",
+            "required": true,
+            "schema": {
+              "pattern": "^ws_[0-9A-Za-z]{12}$",
+              "title": "Workspace Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "integration_id",
+            "required": true,
+            "schema": {
+              "pattern": "^int_[0-9A-Za-z]{12}$",
+              "title": "Integration Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Integration"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "402": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Payment required"
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Not found"
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Validation failed"
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            },
+            "description": "Internal error"
+          }
+        },
+        "security": [
+          {
+            "WorkspaceApiKey": []
+          }
+        ],
+        "summary": "Get Integration",
+        "tags": [
+          "Integrations"
+        ]
+      }
+    }
+  },
+  "servers": [
+    {
+      "url": "https://api.hodor.ai"
+    }
+  ]
+}

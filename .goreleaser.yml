@@ -1,0 +1,72 @@
+# GoReleaser builds, signs and publishes a release of the provider from the
+# public mirror, TryColibri/terraform-provider-hodor, at its tag vX.Y.Z, in the
+# layout the Terraform Registry reads: one zip per platform, a SHA256SUMS file
+# signed with the GPG key the Registry knows for the namespace, and the
+# manifest naming the plugin protocol. It runs in colibri-core's release
+# workflow (.github/workflows/terraform-provider-release.yml), never by hand,
+# with the Go of go.mod and these variables:
+#
+#   GITHUB_TOKEN     the release bot's credential, which creates the mirror's release
+#   GPG_FINGERPRINT  the signing key's fingerprint, imported by the workflow
+#   GPG_PASSPHRASE   its passphrase, handed to gpg on stdin
+version: 2
+
+project_name: terraform-provider-hodor
+
+builds:
+  - env:
+      - CGO_ENABLED=0
+    # The same source gives the same zip: no path or build time in the binary.
+    mod_timestamp: "{{ .CommitTimestamp }}"
+    flags:
+      - -trimpath
+    ldflags:
+      - "-s -w -X main.version={{ .Version }}"
+    goos: [darwin, freebsd, linux, windows]
+    goarch: [amd64, "386", arm, arm64]
+    # Go has no 32-bit macOS target since Go 1.15, on Intel or ARM.
+    ignore:
+      - goos: darwin
+        goarch: "386"
+      - goos: darwin
+        goarch: arm
+    # The Registry's name for the plugin binary.
+    binary: "{{ .ProjectName }}_v{{ .Version }}"
+
+archives:
+  - formats: [zip]
+    name_template: "{{ .ProjectName }}_{{ .Version }}_{{ .Os }}_{{ .Arch }}"
+
+checksum:
+  name_template: "{{ .ProjectName }}_{{ .Version }}_SHA256SUMS"
+  algorithm: sha256
+  extra_files:
+    - glob: terraform-registry-manifest.json
+      name_template: "{{ .ProjectName }}_{{ .Version }}_manifest.json"
+
+signs:
+  - artifacts: checksum
+    stdin: "{{ .Env.GPG_PASSPHRASE }}"
+    args:
+      - --batch
+      - --pinentry-mode
+      - loopback
+      - --passphrase-fd
+      - "0"
+      - --local-user
+      - "{{ .Env.GPG_FINGERPRINT }}"
+      - --output
+      - "${signature}"
+      - --detach-sign
+      - "${artifact}"
+
+release:
+  github:
+    owner: TryColibri
+    name: terraform-provider-hodor
+  extra_files:
+    - glob: terraform-registry-manifest.json
+      name_template: "{{ .ProjectName }}_{{ .Version }}_manifest.json"
+
+changelog:
+  disable: true

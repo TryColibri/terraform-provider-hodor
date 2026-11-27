@@ -1,0 +1,74 @@
+---
+page_title: "{{.Name}} {{.Type}} - {{.RenderedProviderName}}"
+subcategory: ""
+description: |-
+{{ .Description | plainmarkdown | trimspace | prefixlines "  " }}
+---
+
+# {{.Name}} ({{.Type}})
+
+{{ .Description | trimspace }}
+
+## Contract and version
+
+A contract uses two resource types:
+
+| Resource | Holds | On a change |
+|---|---|---|
+| `hodor_contract` | the contract's identity: `name`, `description`, `access_requests_enabled`, and whether it is on, `enabled` | updated in place, at once |
+| `hodor_contract_version` | one version of what the contract grants: the tools it opens on each connector (`permission_sets`), the groups it serves (`group_ids`) and `code_mode` | never edited: any change creates a new version, numbered 1, 2, 3... |
+
+The contract's latest version is the one in force while the contract is on: creating a version puts it in force at once, and what the contract's agents may do is that version, and nothing else. Workspace policies are not in the provider yet: they come with a later release. A version keeps the policies its contract's latest version attaches, as set in the Hodor app. A contract with no version grants nothing. Declare one `hodor_contract_version` per contract: two would fight for the latest, and the one Terraform creates last would be in force.
+
+## Example Usage
+
+{{ tffile .ExampleFile }}
+
+## Change what a contract grants: replace
+
+Change the `hodor_contract_version` resource itself, a tool, a group or `code_mode`. Terraform cannot edit a version, so it plans to replace it (the plan, abridged):
+
+```text
+  # hodor_contract_version.support must be replaced
+-/+ resource "hodor_contract_version" "support" {
+      ~ code_mode = false -> true # forces replacement
+
+Plan: 1 to add, 0 to change, 1 to destroy.
+```
+
+In the apply, the old version is removed from the state only: Hodor keeps it, and it stays in force until the new one exists. Terraform then creates the new version, which is in force at once. No `create_before_destroy` is needed, and the contract is never left without a version in force. While the contract is off (`enabled = false`), the new version is stored, not in force, and goes in force when the contract is switched on.
+
+## Switch a contract off
+
+Set `enabled = false` and apply. The contract and its agents stay, the agents are blocked, and its latest version is out of force. A version created while the contract is off is stored without going in force. Set `enabled = true`, or remove the line, and apply: the latest version is in force again, and no version is created. To delete the contract, destroy the resource instead.
+
+## Roll back
+
+Restore the older configuration in the `hodor_contract_version` resource and apply. Terraform replaces the version, and Hodor creates a new version with that configuration, under a new number, in force at once while the contract is on. While it is off, the new version is stored, and switching the contract on puts it in force: it is the latest. Importing an older version (`ctr_.../ctv_...`) puts nothing in force: only creating a version does.
+
+## List every tool
+
+A permission set lists the names of the tools it enables, as the connector's integration lists them (`data "hodor_integration"`'s `tools`). There is no "all tools" and no wildcard: a version is immutable, and must not gain a tool when the integration adds one. `tools = data.hodor_integration.x.tools` names every tool one by one in the plan; a tool the catalog gains later shows in a later plan as a new version, granted only once applied. To grant fewer, list the names you want, or filter that list. A name the connector does not have fails the version's create with `422`.
+
+## Limitations
+
+- Manage a contract from Terraform or from the Hodor app, not both. Each version Terraform creates resets the contract's draft in the app to it. Publishing from the app creates a newer version, which is then in force; Terraform's version still reads the same, so the next plan shows no change. `terraform apply -replace=hodor_contract_version.<name>` puts Terraform's configuration back in force, as a new version.
+- A connector removed while a version is created is a `409` naming it, and nothing is written: the version in force stays. A policy the latest version attaches, deleted since, is a `409` too: detach it from the contract in the Hodor app.
+- Switching a contract back on is a `409` when its latest version names a connector the workspace no longer has, and nothing of the change is written. Change the `hodor_contract_version` so it no longer names it, apply, then switch the contract on. It is a `409` too when the latest version attaches a policy deleted since: detach it from the contract in the Hodor app, then switch the contract on.
+- Switching a contract off or on in the app shows in the next plan, which puts `enabled` back as the configuration says.
+- Destroying the contract deletes every version of it, so a version resource left in another configuration reads as gone.
+- Creating a contract with `access_requests_enabled = false`, or changing it, needs access requests on for the workspace.
+
+{{ .SchemaMarkdown | trimspace }}
+
+## Import
+
+A contract is imported by its id, `ctr_` followed by 12 letters and digits, as Hodor answered it when the contract was created: the `id` of the `hodor_contract` in another state, for example. The Hodor app does not show it yet. Its versions are imported each on its own, by `ctr_.../ctv_...`.
+
+In Terraform 1.5 and later, with an [`import` block](https://developer.hashicorp.com/terraform/language/import):
+
+{{ tffile .ImportIDConfigFile }}
+
+Or with the [`terraform import` command](https://developer.hashicorp.com/terraform/cli/commands/import):
+
+{{ codefile "shell" .ImportFile }}
